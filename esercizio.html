@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./style.css">
+    <title>Meteo Comuni Italiani</title>
+</head>
+<body>
+    <h1 id="TITLE">Meteo Comuni Italiani</h1>
+    <div>
+        <h2>Seleziona un Comune</h2>
+        <select id="mySelect">
+            <option value="">--Seleziona un comune--</option>
+        </select>
+    </div>
+    <div>
+        <h2>POSIZIONE GEOGRAFICA</h2>
+        <p>Longitudine: <span id="lon"></span></p>
+        <p>Latitudine: <span id="lat"></span></p>
+        <h2>Condizioni Meteo</h2>
+        <p>Temperatura: <span id="temp"></span></p>
+        <p>Descrizione: <span id="desc"></span></p>
+    </div>
+
+    <script>
+        //Carica i dati dei comuni dal file JSON
+        fetch('gi_comuni_cap.json')
+            .then(response => response.json())
+            .then(data => {
+                const select = document.getElementById('mySelect');
+                data.forEach(comune => {
+                    const option = document.createElement('option');
+                    option.value = comune.codice_istat;  // valore unico
+                    option.textContent = `${comune.denominazione_ita}, ${comune.denominazione_provincia}`;
+                    option.dataset.lat = comune.lat;  // salviamo la latitudine
+                    option.dataset.lon = comune.lon;  // salviamo la longitudine
+                    select.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Errore nel caricamento dei comuni:', error));
+
+        //Aggiungi un evento per gestire la selezione del comune
+        document.getElementById('mySelect').addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const lat = selectedOption.dataset.lat;  // ottieni la latitudine
+            const lon = selectedOption.dataset.lon;  // ottieni la longitudine
+
+            if (lat && lon) {
+                fetchWeatherData(lat, lon);  // chiama la funzione per ottenere i dati meteo
+            }
+        });
+
+        //Funzione per ottenere i dati meteo da OpenWeather
+        function fetchWeatherData(lat, lon) {
+            const apiKey = '253682c0bd759acfb4255d4aa08c3dd7'; // Usa la tua chiave API
+            const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('lon').textContent = data.coord.lon + ' °';
+                    document.getElementById('lat').textContent = data.coord.lat + ' °';
+                    document.getElementById('temp').textContent = data.main.temp + ' °C';
+                    document.getElementById('desc').textContent = data.weather[0].description;
+                })
+                .catch(error => console.error('Errore nella richiesta meteo:', error));
+        }
+    </script>
+</body>
+</html>
